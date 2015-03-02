@@ -30,7 +30,7 @@ class Queue(object):
 
 
 
-    def put(self,name,data,nextRunAt,frequency,priority):
+    def put(self,name,data,nextRunAt,frequency=0,priority=None):
         ''' function to add into the database'''
         job = dict(DEFAULT_INSERT)
         self.priority=priority
@@ -51,14 +51,17 @@ class Queue(object):
 
     def resetJob(self,job):
         #updates a job to be run next based on frequency. 
-        job = self._wrap_one(self.collection.find_and_modify(
-            query={"_id":job.id},
-            update={"$set": {
-                "nextRunAt":datetime.now()+timedelta(hours=int(job.frequency))}},
-            sort=[('_id', pymongo.ASCENDING)],
-            new=1,
-            limit=1,
-            ))
+        if(job.frequency != 0):
+            job = self._wrap_one(self.collection.find_and_modify(
+                query={"_id":job.id},
+                update={"$set": {
+                    "locked_by":None,
+                    "locked_at":None,
+                    "nextRunAt":datetime.now()+timedelta(hours=int(job.frequency))}},
+                sort=[('_id', pymongo.ASCENDING)],
+                new=1,
+                limit=1,
+                ))
 
     def configure(self,consumer_id="Worker"+str(random.random()),prio=None):
         #Assigns a name to a worker as well as filters based on priority
